@@ -21,6 +21,7 @@ let Browser = function () {
         timeout: 15,
         connectTimeout: 5,
         httpProxy: null,
+        httpProxyUserPwd: null,
         allowRedirect: true
     };
 
@@ -28,7 +29,7 @@ let Browser = function () {
     let referer = '';
 
     self.getProxy = function () { return config.httpProxy; };
-    self.setProxy = function (host) { config.httpProxy = host; };
+    self.setProxy = function (host, creds) { config.httpProxy = host; config.httpProxyUserPwd = creds; };
     self.setReferer = function (url) { referer = url; };
     self.setCookie = function (cookie, url, options) { cookiejar.setCookieSync(cookie, url, options); };
     self.setTimeout = function (connect, read) { config.connectTimeout = connect; config.timeout = read; };
@@ -78,8 +79,10 @@ let Browser = function () {
         let startTime = new Date().getTime();
         let timeoutControl = setInterval(() => {
             let curTime = new Date().getTime();
-            if ((curTime - startTime) > (config.timeout + config.connectTimeout) * 1000) {
+            let execTime = Math.round((curTime - startTime) / 1000);
+            if (execTime > (config.timeout + config.connectTimeout) * 2) {
                 console.log('timeout', options.url, curTime - startTime, config);
+                throw 'Something went wrong and timeout expired';
             }
         }, 500);
         let curl = new Curl();
@@ -102,6 +105,9 @@ let Browser = function () {
         curl.setOpt(Curl.option.ACCEPT_ENCODING, 'gzip');
         if (config.httpProxy) {
             curl.setOpt(Curl.option.PROXY, config.httpProxy);
+            if (config.httpProxyUserPwd) {
+                curl.setOpt(Curl.option.PROXYUSERPWD, config.httpProxyUserPwd);
+            }
         }
         curl.on('header', handleHeader);
         curl.on('error', handleError);
@@ -115,8 +121,8 @@ let Browser = function () {
 
         function handleHeader(chunk) {
             let header = chunk.toString().replace("\r", '').replace("\n", '');
-            if(chunk.length > 2) {
-                if(header.substr(0, 4) === 'HTTP') {
+            if (chunk.length > 2) {
+                if (header.substr(0, 4) === 'HTTP') {
                     let status = header.split(' ');
                     responseStatus = status[1];
                 } else {
@@ -140,9 +146,9 @@ let Browser = function () {
                 proxy: config.httpProxy
             };
             for (let i in responseHeaders) {
-                if(!responseHeaders.hasOwnProperty(i)) continue;
+                if (!responseHeaders.hasOwnProperty(i)) continue;
                 let header = responseHeaders[i];
-                if(/Set\-Cookie:/.test(header)) {
+                if (/Set\-Cookie:/.test(header)) {
                     let cookie = Cookie.parse(header.replace('Set-Cookie:', '').replace('qwintry.loc', 'qwintry.com').trim());
                     if (cookie) {
                         cookiejar.setCookieSync(cookie, options.url, { ignoreError: true });
@@ -167,7 +173,7 @@ let Browser = function () {
             }
             curl.close();
             callbackCalled = true;
-            if(error) {
+            if (error) {
                 callback(error, null);
             } else {
                 callback(null, result);
