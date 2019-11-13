@@ -10,7 +10,6 @@ let DvBrowser = function () {
     let globalHeaders = [
         'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language: ru,en-US,en;q=0.8,ru;q=0.6',
-        'Accept-Encoding: gzip, deflate',
         'Connection: close',
         'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
         'Cache-Control: max-age=0',
@@ -61,6 +60,9 @@ let DvBrowser = function () {
             } else if (method === 'POST') {
                 headers.push('Content-Type: application/x-www-form-urlencoded');
             }
+            if (!options.noDeflate) {
+                headers.push('Accept-Encoding: gzip, deflate');
+            }
             if (options['headers']) {
                 for (let i = 0; i < options['headers'].length; i++) {
                     headers.push(options['headers'][i]);
@@ -93,7 +95,9 @@ let DvBrowser = function () {
             curl.setOpt(Curl.option.FOLLOWLOCATION, config.allowRedirect);
             curl.setOpt(Curl.option.SSL_VERIFYHOST, false);
             curl.setOpt(Curl.option.SSL_VERIFYPEER, false);
-            curl.setOpt(Curl.option.ACCEPT_ENCODING, 'gzip');
+            if (!options.noDeflate) {
+                curl.setOpt(Curl.option.ACCEPT_ENCODING, 'gzip');
+            }
             if (config.httpProxy) {
                 curl.setOpt(Curl.option.PROXY, config.httpProxy);
                 if (config.httpProxyUserPwd) {
