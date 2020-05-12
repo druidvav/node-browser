@@ -10,7 +10,7 @@ let DvBrowser = function () {
     let globalHeaders = [
         'Accept-Language: ru,en-US,en;q=0.8,ru;q=0.6',
         'Connection: close',
-        'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
+        'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36',
         'Cache-Control: max-age=0',
         'Proxy-Connection: close',
         'Expect: '  // remove "Expect: 100-continue" header
@@ -34,7 +34,11 @@ let DvBrowser = function () {
     self.setTimeout = function (connect, read) { config.connectTimeout = connect; config.timeout = read; };
     self.setAllowRedirect = function (allowRedirect) { config.allowRedirect = allowRedirect };
 
-    self.get = function (url) { return processRequest('GET', { url: url }); };
+    self.get = function (url, options) {
+        if (!options) options = { };
+        options.url = url;
+        return processRequest('GET', options);
+    };
     self.post = function (url, postData) { return processRequest('POST', { url: url, postData: postData }); };
     self.postEx = function (options) { return processRequest('POST', options); };
     self.request = function (method, options) { return processRequest(method, options); };
