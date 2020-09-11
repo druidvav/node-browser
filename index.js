@@ -10,7 +10,6 @@ let DvBrowser = function () {
     let globalHeaders = [
         'Accept-Language: ru,en-US,en;q=0.8,ru;q=0.6',
         'Connection: close',
-        'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36',
         'Cache-Control: max-age=0',
         'Proxy-Connection: close',
         'Expect: '  // remove "Expect: 100-continue" header
@@ -33,6 +32,15 @@ let DvBrowser = function () {
     self.setCookie = function (cookie, url, options) { cookiejar.setCookieSync(cookie, url, options); };
     self.setTimeout = function (connect, read) { config.connectTimeout = connect; config.timeout = read; };
     self.setAllowRedirect = function (allowRedirect) { config.allowRedirect = allowRedirect };
+    self.getCookie = function (key, url) {
+        let cookies = cookiejar.getCookiesSync(url);
+        for (let cookie of cookies) {
+            if (cookie.key === key) {
+                return cookie.value;
+            }
+        }
+        return null;
+    };
 
     self.get = function (url, options) {
         if (!options) options = { };
@@ -67,6 +75,11 @@ let DvBrowser = function () {
                 headers.push('Accept: ' + options.accept);
             } else {
                 headers.push('Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8');
+            }
+            if (options.userAgent) {
+                headers.push('User-Agent: ' + options.userAgent);
+            } else {
+                headers.push('User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36');
             }
             if (!options.noDeflate) {
                 headers.push('Accept-Encoding: gzip, deflate');
