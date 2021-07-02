@@ -8,7 +8,6 @@ let DvBrowser = function () {
     let self = this;
 
     let globalHeaders = [
-        'Accept-Language: ru,en-US,en;q=0.8,ru;q=0.6',
         'Connection: close',
         'Cache-Control: max-age=0',
         'Proxy-Connection: close',
@@ -71,16 +70,9 @@ let DvBrowser = function () {
             } else if (method === 'POST') {
                 headers.push('Content-Type: application/x-www-form-urlencoded');
             }
-            if (options.accept) {
-                headers.push('Accept: ' + options.accept);
-            } else {
-                headers.push('Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8');
-            }
-            if (options.userAgent) {
-                headers.push('User-Agent: ' + options.userAgent);
-            } else {
-                headers.push('User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36');
-            }
+            headers.push('Accept: ' + (options['accept'] ? options['accept'] : 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'));
+            headers.push('Accept-Language: ' + (options['acceptLanguage'] ? options['acceptLanguage'] : 'ru,en-US,en;q=0.8,ru;q=0.6'));
+            headers.push('User-Agent: ' + (options['userAgent'] ? options['userAgent'] : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36'));
             if (!options.noDeflate) {
                 headers.push('Accept-Encoding: gzip, deflate');
             }
