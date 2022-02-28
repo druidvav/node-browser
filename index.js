@@ -1,11 +1,13 @@
+// noinspection JSUnusedGlobalSymbols
+
 "use strict";
 let Curl = require('node-libcurl').Curl;
 let CurlIpResolve = require('node-libcurl').CurlIpResolve;
 let Cookie = require('tough-cookie').Cookie;
 let CookieJar = require('tough-cookie').CookieJar;
 
-let DvBrowser = function () {
-    let self = this;
+let DvBrowser = function (opts) {
+    if (!opts) opts = { };
 
     let globalHeaders = [
         'Connection: close',
@@ -19,19 +21,20 @@ let DvBrowser = function () {
         connectTimeout: 5,
         httpProxy: null,
         httpProxyUserPwd: null,
-        allowRedirect: true
+        allowRedirect: true,
+        userAgent: opts['userAgent'] ?? 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36',
     };
 
     let cookiejar = new CookieJar();
     let referer = '';
 
-    self.getProxy = function () { return config.httpProxy; };
-    self.setProxy = function (host, creds) { config.httpProxy = host; config.httpProxyUserPwd = creds; };
-    self.setReferer = function (url) { referer = url; };
-    self.setCookie = function (cookie, url, options) { cookiejar.setCookieSync(cookie, url, options); };
-    self.setTimeout = function (connect, read) { config.connectTimeout = connect; config.timeout = read; };
-    self.setAllowRedirect = function (allowRedirect) { config.allowRedirect = allowRedirect };
-    self.getCookie = function (key, url) {
+    this.getProxy = function () { return config.httpProxy; };
+    this.setProxy = function (host, creds) { config.httpProxy = host; config.httpProxyUserPwd = creds; };
+    this.setReferer = function (url) { referer = url; };
+    this.setCookie = function (cookie, url, options) { cookiejar.setCookieSync(cookie, url, options); };
+    this.setTimeout = function (connect, read) { config.connectTimeout = connect; config.timeout = read; };
+    this.setAllowRedirect = function (allowRedirect) { config.allowRedirect = allowRedirect };
+    this.getCookie = function (key, url) {
         let cookies = cookiejar.getCookiesSync(url);
         for (let cookie of cookies) {
             if (cookie.key === key) {
@@ -41,14 +44,14 @@ let DvBrowser = function () {
         return null;
     };
 
-    self.get = function (url, options) {
+    this.get = function (url, options) {
         if (!options) options = { };
         options.url = url;
         return processRequest('GET', options);
     };
-    self.post = function (url, postData) { return processRequest('POST', { url: url, postData: postData }); };
-    self.postEx = function (options) { return processRequest('POST', options); };
-    self.request = function (method, options) { return processRequest(method, options); };
+    this.post = function (url, postData) { return processRequest('POST', { url: url, postData: postData }); };
+    this.postEx = function (options) { return processRequest('POST', options); };
+    this.request = function (method, options) { return processRequest(method, options); };
 
     function processRequest(method, options) {
         return new Promise((resolve, reject) => {
@@ -62,18 +65,18 @@ let DvBrowser = function () {
             if (cookieString) {
                 headers.push('Cookie: ' + cookieString);
             }
-            if (referer) {
-                headers.push('Referer: ' + referer);
+            if (options['referer'] || referer) {
+                headers.push('Referer: ' + (options['referer'] ?? referer));
             }
-            if (options.contentType) {
-                headers.push('Content-Type: ' + options.contentType);
+            if (options['contentType']) {
+                headers.push('Content-Type: ' + options['contentType']);
             } else if (method === 'POST') {
                 headers.push('Content-Type: application/x-www-form-urlencoded');
             }
             headers.push('Accept: ' + (options['accept'] ? options['accept'] : 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'));
             headers.push('Accept-Language: ' + (options['acceptLanguage'] ? options['acceptLanguage'] : 'ru,en-US,en;q=0.8,ru;q=0.6'));
-            headers.push('User-Agent: ' + (options['userAgent'] ? options['userAgent'] : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36'));
-            if (!options.noDeflate) {
+            headers.push('User-Agent: ' + (options['userAgent'] ?? config['userAgent']));
+            if (!options['noDeflate']) {
                 headers.push('Accept-Encoding: gzip, deflate');
             }
             if (options['headers']) {
@@ -108,7 +111,7 @@ let DvBrowser = function () {
             curl.setOpt(Curl.option.FOLLOWLOCATION, config.allowRedirect);
             curl.setOpt(Curl.option.SSL_VERIFYHOST, false);
             curl.setOpt(Curl.option.SSL_VERIFYPEER, false);
-            if (!options.noDeflate) {
+            if (!options['noDeflate']) {
                 curl.setOpt(Curl.option.ACCEPT_ENCODING, 'gzip');
             }
             if (config.httpProxy) {
