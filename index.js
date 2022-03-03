@@ -6,24 +6,22 @@ let CurlIpResolve = require('node-libcurl').CurlIpResolve;
 let Cookie = require('tough-cookie').Cookie;
 let CookieJar = require('tough-cookie').CookieJar;
 
-let DvBrowser = function (opts) {
-    if (!opts) opts = { };
+let DvBrowser = function (config) {
+    if (!config) config = { };
+    config.timeout = config.timeout ?? 15;
+    config.connectTimeout = config.connectTimeout ?? 5;
+    config.httpProxy = config.httpProxy ?? null;
+    config.httpProxyUserPwd = config.httpProxyUserPwd ?? null;
+    config.allowRedirect = config.allowRedirect ?? true;
+    config.userAgent = config.userAgent ?? 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36';
+    config.accept = config.accept ?? 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
+    config.acceptLanguage = config.acceptLanguage ?? 'ru,en-US,en;q=0.8,ru;q=0.6';
 
     let globalHeaders = [
-        'Connection: close',
         'Cache-Control: max-age=0',
         'Proxy-Connection: close',
         'Expect: '  // remove "Expect: 100-continue" header
     ];
-
-    let config = {
-        timeout: 15,
-        connectTimeout: 5,
-        httpProxy: null,
-        httpProxyUserPwd: null,
-        allowRedirect: true,
-        userAgent: opts['userAgent'] ?? 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36',
-    };
 
     let cookiejar = new CookieJar();
     let referer = '';
@@ -65,17 +63,18 @@ let DvBrowser = function (opts) {
             if (cookieString) {
                 headers.push('Cookie: ' + cookieString);
             }
-            if (options['referer'] || referer) {
-                headers.push('Referer: ' + (options['referer'] ?? referer));
-            }
             if (options['contentType']) {
                 headers.push('Content-Type: ' + options['contentType']);
             } else if (method === 'POST') {
                 headers.push('Content-Type: application/x-www-form-urlencoded');
             }
-            headers.push('Accept: ' + (options['accept'] ? options['accept'] : 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'));
-            headers.push('Accept-Language: ' + (options['acceptLanguage'] ? options['acceptLanguage'] : 'ru,en-US,en;q=0.8,ru;q=0.6'));
+            headers.push('Connection: ' + (options['connection'] ?? 'close'));
+            headers.push('Accept: ' + (options['accept'] ?? config['accept']));
+            headers.push('Accept-Language: ' + (options['acceptLanguage'] ?? config['acceptLanguage']));
             headers.push('User-Agent: ' + (options['userAgent'] ?? config['userAgent']));
+            if (options['referer'] || referer) {
+                headers.push('Referer: ' + (options['referer'] ?? referer));
+            }
             if (!options['noDeflate']) {
                 headers.push('Accept-Encoding: gzip, deflate');
             }
