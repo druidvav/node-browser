@@ -47,8 +47,19 @@ let DvBrowser = function (config) {
         options.url = url;
         return processRequest('GET', options);
     };
-    this.post = function (url, postData) { return processRequest('POST', { url: url, postData: postData }); };
-    this.postEx = function (options) { return processRequest('POST', options); };
+    this.post = function (url, postData, options) {
+        if (!options) options = { };
+        options.url = url;
+        options.postData = postData;
+        return processRequest('POST', options);
+    };
+    this.json = function (url, postData, options) {
+        if (!options) options = { };
+        options.url = url;
+        options.postData = postData;
+        options.contentType = 'application/json';
+        return processRequest('POST', options);
+    };
     this.request = function (method, options) { return processRequest(method, options); };
 
     function processRequest(method, options) {
