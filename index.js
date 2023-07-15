@@ -17,11 +17,15 @@ let DvBrowser = function (_config) {
         cacheControl: 'max-age=0',
         connection: 'close',
         proxyConnection: 'close',
+        xhr: false,
+        origin: null,
+        authBasic: null,
+        authBearer: null,
+        noDeflate: false,
     }, _config);
 
     const cookiejar = new CookieJar(null);
 
-    this.getProxy = function () { return config.httpProxy; };
     this.setCookie = function (cookie, url, options) { cookiejar.setCookieSync(cookie, url, options); };
     this.getCookie = function (key, url) {
         let cookies = cookiejar.getCookiesSync(url);
@@ -67,10 +71,11 @@ let DvBrowser = function (_config) {
             if (cookieString) {
                 headers.push('Cookie: ' + cookieString);
             }
-            if (options['contentType']) {
-                headers.push('Content-Type: ' + options['contentType']);
-            } else if (method === 'POST') {
-                headers.push('Content-Type: application/x-www-form-urlencoded');
+            if (!options.contentType && options.postData) {
+                options.contentType = 'application/x-www-form-urlencoded';
+            }
+            if (options.contentType) {
+                headers.push('Content-Type: ' + options.contentType);
             }
             headers.push('Connection: ' + options['connection']);
             headers.push('Accept: ' + options['accept']);
@@ -78,8 +83,24 @@ let DvBrowser = function (_config) {
             headers.push('User-Agent: ' + options['userAgent']);
             headers.push('Cache-Control: ' + options['cacheControl']);
             headers.push('Proxy-Connection: ' + options['proxyConnection']);
-            if (options['referer']) headers.push('Referer: ' + options['referer']);
-            if (!options['noDeflate']) headers.push('Accept-Encoding: gzip, deflate');
+            if (options.referer) {
+                headers.push('Referer: ' + options.referer);
+            }
+            if (!options.noDeflate) {
+                headers.push('Accept-Encoding: gzip, deflate');
+            }
+            if (options.xhr) {
+                headers.push('X-Requested-With: XMLHttpRequest');
+            }
+            if (options.origin) {
+                headers.push('Origin: ' + options.origin);
+            }
+            if (options.authBasic) {
+                headers.push('Authorization: Basic ' + (new Buffer(options.authBasic)).toString('base64'));
+            }
+            if (options.authBearer) {
+                headers.push('Authorization: Bearer ' + options.authBearer);
+            }
             if (options['headers']) {
                 for (let i = 0; i < options['headers'].length; i++) {
                     headers.push(options['headers'][i]);
@@ -113,7 +134,7 @@ let DvBrowser = function (_config) {
             curl.setOpt(Curl.option.FOLLOWLOCATION, options.allowRedirect);
             curl.setOpt(Curl.option.SSL_VERIFYHOST, false);
             curl.setOpt(Curl.option.SSL_VERIFYPEER, false);
-            if (!options['noDeflate']) {
+            if (!options.noDeflate) {
                 curl.setOpt(Curl.option.ACCEPT_ENCODING, 'gzip');
             }
             if (options.httpProxy) {
