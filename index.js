@@ -9,7 +9,6 @@ let DvBrowser = function (_config) {
         timeout: 15,
         connectTimeout: 5,
         httpProxy: null,
-        httpProxyUserPwd: null,
         allowRedirect: true,
         userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36',
         accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -22,6 +21,7 @@ let DvBrowser = function (_config) {
         authBasic: null,
         authBearer: null,
         noDeflate: false,
+        lowSpeedTimeout: 15,
     }, _config);
 
     const cookiejar = new CookieJar(null);
@@ -121,8 +121,10 @@ let DvBrowser = function (_config) {
             curl.setOpt(Curl.option.URL, options.url);
             curl.setOpt(Curl.option.TIMEOUT, options.timeout);
             curl.setOpt(Curl.option.CONNECTTIMEOUT, options.connectTimeout);
-            curl.setOpt(Curl.option.LOW_SPEED_TIME, options.timeout);
-            curl.setOpt(Curl.option.LOW_SPEED_LIMIT, 512);
+            if (options.lowSpeedTimeout) {
+                curl.setOpt(Curl.option.LOW_SPEED_TIME, options.lowSpeedTimeout);
+                curl.setOpt(Curl.option.LOW_SPEED_LIMIT, 512);
+            }
             curl.setOpt(Curl.option.NOPROGRESS, true);
             curl.setOpt(Curl.option.HTTPHEADER, headers);
             // curl.setOpt(Curl.option.VERBOSE, true);
@@ -137,10 +139,10 @@ let DvBrowser = function (_config) {
             if (!options.noDeflate) {
                 curl.setOpt(Curl.option.ACCEPT_ENCODING, 'gzip');
             }
-            if (options.httpProxy) {
-                curl.setOpt(Curl.option.PROXY, options.httpProxy);
-                if (options.httpProxyUserPwd) {
-                    curl.setOpt(Curl.option.PROXYUSERPWD, options.httpProxyUserPwd);
+            if (options?.httpProxy?.address && options?.httpProxy?.port) {
+                curl.setOpt(Curl.option.PROXY, options.httpProxy.address + ':' + options.httpProxy.port);
+                if (options.httpProxy.auth) {
+                    curl.setOpt(Curl.option.PROXYUSERPWD, options.httpProxy.auth);
                 }
             }
             curl.on('header', handleHeader);
