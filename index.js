@@ -22,6 +22,7 @@ let DvBrowser = function (_config) {
         authBearer: null,
         noDeflate: false,
         lowSpeedTimeout: 15,
+        contentDecoding: null,
     }, _config);
 
     const cookiejar = new CookieJar(null);
@@ -138,6 +139,9 @@ let DvBrowser = function (_config) {
             curl.setOpt(Curl.option.SSL_VERIFYPEER, false);
             if (!options.noDeflate) {
                 curl.setOpt(Curl.option.ACCEPT_ENCODING, 'gzip');
+            }
+            if (options.contentDecoding !== null) {
+                curl.setOpt(Curl.option.HTTP_CONTENT_DECODING, options.contentDecoding);
             }
             if (options?.httpProxy?.address && options?.httpProxy?.port) {
                 curl.setOpt(Curl.option.PROXY, options.httpProxy.address + ':' + options.httpProxy.port);
